@@ -11,16 +11,18 @@ import urllib.request
 import argparse
 import time
 
+#webpage_dl - takes url details and downloads the webpage
+#then passes it to asin_parse to analyze
 def webpage_dl(url,merchantID_url_tag,merchantID):
     webpage = urllib.request.urlopen(url+merchantID_url_tag+merchantID)
     webContent = webpage.read().decode('utf-8')
     pageCount = asin_parse(webContent,merchantID)
     return(pageCount)
 
+#asin_parse - takes in webpage, spits out ASINs
 def asin_parse(webContent,merchantID):
-    #asin_parse - takes in webpage, spits out ASINs
 
-    #open ASIN list file
+    #open and append to ASIN list file
     filename = 'ASIN_List_'+merchantID
     f = open(filename + ".txt", 'a')
 
@@ -63,13 +65,15 @@ def main():
     arg_parser = argparse.ArgumentParser(description='List all ASINs from Amazon Seller')
     arg_parser.add_argument("-m",type=str,help="Amazon Merchant ID #",required=True)
     args = arg_parser.parse_args()
+
+    #merchantID is carried throughout functions because needed for naming file
     merchantID = args.m
 
     #initial page download writes first page of ASINs and retrieves page count
     url = 'https://www.amazon.com/s?'
-
-    #merchantID carried throughout functions because needed for naming file
     merchantID_url_tag='&merchant='
+
+    #call webpage_dl with url to retrieve page count
     pageCount = webpage_dl(url,merchantID_url_tag,merchantID)
     if (int(pageCount) < 0):
         return(-1)
@@ -77,6 +81,8 @@ def main():
     #now iterate through all the seller's pages
     for i in range(2, int(pageCount)):
         webpage_dl(url+'&page='+str(i),merchantID_url_tag,merchantID)
+        #have to wait or amazon cuts you off mid-run
         time.sleep(1)
+
     print('Operation Success!\n')
 main()
